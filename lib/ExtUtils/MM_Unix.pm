@@ -164,7 +164,16 @@ EOF
     for my $ext (@exts) {
 	push @m, "\n.$ext\$(OBJ_EXT) :\n\t$command $flags "
             .($dbgout?"$dbgout ":'')
-            ."\$*.$ext" . ( $m_o ? " $m_o" : '' ) . "\n";
+            ."\$*.$ext" . ( $m_o ? " $m_o" : '' )
+
+            # This horrible incantation is here because $* is
+            # contextual to what follows it: $*.c might be ../lib/file.c,
+            # but $*.o can be just lib/file.o. Otherwise this could
+            # just be `-o $*$(OBJ_EXT)`.
+            #
+            . " -o `echo \$*.$ext | \$(PERL) -pe 's/\\.$ext\$\$/\$(OBJ_EXT)/'`"
+
+            . "\n";
     }
     return join "", @m;
 }
